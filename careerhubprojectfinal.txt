@@ -1,0 +1,241 @@
+use careerhub;
+show tables;
+-- inserting into company table
+insert into companies (id,company_name,location) values
+(1,'ABB tech','chennai'),
+(2,'siemens','mumbai'),
+(3,'google','kochi'),
+(4,'ford','bangalore'),
+(5,'bmw','noida');
+
+-- inserting into table jobs
+insert into jobs (companies_id,job_title,job_description,job_location,salary,job_type,posted_date) values
+(1,'system engineer','Design, develop, implement, and maintain technical systems','chennai','80000','full time','2024-03-10'),
+(2,'field service engineer','travel to customer sites to install, repair, and maintain equipment and systems','mumbai','70000','full time','2024-03-11'),
+(3,'software engineer',' design and maintain software applications','kochi','60000','full time','2024-02-13'),
+(4,'data analyst','extract insights from data to inform business decisions','bangalore','75000','full time','2024-01-10'),
+(5,'automotive sofware engineer','develop software for in-vehicle systems like controls and safety features','noida','90000','full time','2024-04-09');
+
+-- inserting records into applicants table
+insert into applicants (id,first_name,last_name,email,phone,resume )
+values (1, 'John',' sk', 'john12@gmail.com', '1234567890', 'John_Resume.pdf'),
+       (2, 'ajith', 'kumar', 'ak@gmail.com', '9876543210', 'ajith_Resume.pdf'),
+       (3, 'Michael', 's', 'michael@gmail.com', '0123856789', 'Michael_Resume.pdf'),
+       (4, 'vijay', 'kumar', 'vijayk@gmailcom', '9870124456', 'vijay_Resume.pdf'),
+       (5, 'David', 'raj', 'davidraj89@gmailcom', '0987654321', 'David_Resume.pdf');
+       
+-- inserting into applications table
+INSERT INTO Applications (jobs_id,  applicants_id,application_date,cover_letter)
+VALUES (1, 1, '2024-04-10', 'I am highly motivated system engineer with strong experience'),
+       (2, 2, '2024-04-09', 'I have an depth knowledge in Understanding of electrical and mechanical principles:'),
+       (3, 3, '2024-04-08', 'I am highly motivated software engineer with strong experience in building web applications'),
+       (4, 4, '2024-04-05', 'I am having knowledge of sql and in statistical analysis'),
+       (5, 5, '2024-04-15', 'I have Proficiency in C, C++, and embedded systems');    
+       select * from applications;
+     -- Tasks
+     
+ /* 6 Develop an SQL query that retrieves job listings from the "Jobs" table within the specified salary
+range. Allow parameters for the minimum and maximum salary values. Display the job title,
+company name, location, and salary for each matching job.
+*/
+-- projection:company
+-- criteria:jobs
+select c.company_name,j.job_title,c.location,j.salary from
+companies c JOIN jobs j ON c.id=j.companies_id
+where salary between 60000 and 80000;
+
+/* output: ABB tech	system engineer	chennai	80000
+siemens	field service engineer	mumbai	70000
+google	software engineer	kochi	60000
+ford	data analyst	bangalore	75000*/
+
+
+/*7. Write an SQL query that retrieves the job application history for a specific applicant. Allow a
+parameter for the ApplicantID, and return a result set with the job titles, company names, and
+application dates for all the jobs the applicant has applied to.
+projection:company,job,application
+criteria:applicants
+*/
+
+select c.company_name,j.job_title,ap.application_date from
+companies c 
+join jobs j ON c.id=j.companies_id
+join applications ap ON j.id=ap.jobs_id
+join applicants a ON ap.applicants_id=a.id
+where a.id=1;
+
+/* output:
+ABB tech	system engineer	2024-04-10*/
+
+
+ /*5. Write an SQL query to count the number of applications received for each job listing in the
+"Jobs" table. Display the job title and the corresponding application count. Ensure that it lists alljobs, even if they have no applications.
+projection:jobs
+criteria:applications
+*/
+
+select j.job_title,count(a.id) as num_of_applications from
+jobs j left join applications a ON j.id=a.jobs_id
+group by j.job_title;
+
+/* output: automotive sofware engineer	1
+data analyst	1
+field service engineer	1
+software engineer	1
+system engineer	1*/
+
+
+/* 8. Create an SQL query that calculates and displays the average salary offered by all companies for
+job listings in the "Jobs" table. Ensure that the query filters out jobs with a salary of zero.
+projection : job
+crieteria:companies*/
+
+select c.company_name,AVG(j.salary) as avg_salary 
+from  companies c JOIN jobs j ON c.id=j.companies_id
+group by c.company_name
+having avg_salary > 0;
+
+/* output:
+ABB tech	80000
+bmw	90000
+ford	75000
+google	60000
+siemens	70000*/
+
+/*9. Write an SQL query to identify the company that has posted the most job listings. Display the
+company name along with the count of job listings they have posted. Handle ties if multiple
+companies have the same maximum count.
+projection:company
+crietria:jobs
+*/
+select c.company_name,count(j.id) as count_of_jobs
+from  companies c JOIN jobs j ON c.id=j.companies_id
+group by c.company_name
+order by count_of_jobs
+limit 1;
+/*output:
+ABB tech	1 */
+
+
+/*11.Retrieve a list of distinct job titles with salaries between $60,000 and $80,000.
+*/
+select distinct job_title from 
+jobs
+where salary between 60000 and 80000;
+
+/* output
+system engineer
+field service engineer
+software engineer
+data analyst */
+
+-- 12 Find the jobs that have not received any applications.
+-- projection:jobs
+-- crieteria:applications
+select * from 
+jobs
+where id NOT IN (select ap.jobs_id from 
+				 jobs j JOIN applications ap ON j.id=ap.jobs_id); 
+			/* 							NULL		*/		
+            
+/* 13. Retrieve a list of job applicants along with the companies they have applied to and the positions
+they have applied for.
+projection:applicants,companies,positions
+*/
+select CONCAT(a.first_name,a.last_name) as applicant,c.company_name,j.job_title  from
+companies c 
+JOIN jobs j ON c.id=j.companies_id
+JOIN applications ap ON j.id=ap.jobs_id
+JOIN applicants a ON ap.applicants_id=a.id;
+
+/* output John sk	ABB tech	system engineer
+ajithkumar	siemens	field service engineer
+Michaels	google	software engineer
+vijaykumar	ford	data analyst
+Davidraj	bmw	automotive sofware engineer*/
+
+
+/* 14. Retrieve a list of companies along with the count of jobs they have posted, even if they have not
+received any applications.
+projection :company
+criteria:jobs
+*/
+select c.company_name,count(j.id) as job_count from
+companies c 
+LEFT JOIN jobs j ON c.id=j.companies_id
+group by c.company_name;
+
+/* output
+ABB tech	1
+bmw	1
+ford	1
+google	1
+siemens	1 */
+
+/*15. List all applicants along with the companies and positions they have applied for, including those
+who have not applied.
+projection:applicants
+criteria :jobs
+*/
+select a.id,a.first_name, a.last_name, c.company_name, j.job_title 
+from applications ap 
+right JOIN applicants a ON ap.applicants_id=a.id 
+JOIN jobs j ON j.id=ap.jobs_id 
+JOIN companies c ON c.id=j.companies_id;
+/* output:
+1	John	 sk	ABB tech	system engineer
+2	ajith	kumar	siemens	field service engineer
+3	Michael	s	google	software engineer
+4	vijay	kumar	ford	data analyst
+5	David	raj	bmw	automotive sofware engineer*/
+
+/*16-Find companies that have posted jobs with a salary higher than the average salary of all jobs.
+projection:companies
+criteria:jobs
+*/
+select c.company_name,j.salary from
+companies c JOIN jobs j ON c.id=j.companies_id
+group by c.company_name
+having j.salary > (select AVG(salary)
+					from jobs);
+/*output:
+bmw	90000*/
+
+/*18)Retrieve a list of jobs with titles containing either 'Developer' or 'Engineer'.
+*/
+
+Select job_Title
+from jobs
+where job_Title LIKE '%Developer%' OR job_Title LIKE '%Engineer%';
+
+
+/* OUTPUT : system engineer
+field service engineer
+software engineer
+automotive sofware engineer
+*/
+
+/* 10. Find the applicants who have applied for positions in companies located in 'CityX' and have at
+least 3 years of experience
+projection:applicant,companies,
+crieteria:company
+*/
+select CONCAT(a.first_name, a.last_name) as applicantname,c.company_name,c.location from 
+applications ap 
+join applicants a ON a.id=ap.applicants_id 
+join jobs j ON j.id=ap.jobs_id 
+join companies c ON j.companies_id=c.id
+where c.location='chennai';
+/*output: John sk	ABB tech	chennai */
+	
+
+
+
+
+
+
+
+
+
+
+
